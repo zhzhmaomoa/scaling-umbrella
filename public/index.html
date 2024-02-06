@@ -1,9 +1,83 @@
 <!DOCTYPE html>
 <html>
 	<head>
-		<title>后台</title>
+		<title>后台-memory</title>
+		<link rel="stylesheet" href="/public.css"/>
+		<style>
+			.table-x{
+				padding:0 1rem;
+			}
+			.table{
+				border-collapse: collapse;
+				width: 100%;
+			}
+			.caption{
+				margin: 1rem 0;
+			}
+			th, td {
+				padding: 0.25rem;
+				text-align: left;
+				border: 1px solid #ccc;
+			}
+		</style>
 	<head>
 	<body>
-		helloworld
+		<lay-out>
+			<div  class="table-x">
+				<table class="table">
+					<caption class="caption">MEMORY</caption>
+					<thead>
+						<tr>
+							<th>ID</th>
+							<th>date</th>
+							<th>title</th>
+							<th>src</th>
+							<th>operation</th>
+						</tr>
+					</thead>
+					<tbody>
+						<form id="addForm">
+							<tr>
+								<td></td>
+								<td>
+									<input name="date"/>
+								</td>
+								<td>
+									<input name="title">
+								</td>
+								<td>
+									<input name="src">
+								</td>
+								<td>
+									<button>save</button>
+								</td>
+							</tr>
+						</form>
+					</tbody>
+				</table>
+			</div>
+
+		</lay-out>
+		<script type="module">
+			import {handleQuery} from  "/api/index.js"
+			import Layout from "/layout.js";
+			customElements.define("lay-out",Layout);
+			
+			const addForm = document.querySelector("#addForm");
+			addForm.addEventListener("submit",async (e)=>{
+				e.preventDefault();
+				const res = await fetch("/friendlyOctoCouscous/api/memory",{
+					method:"POST",
+					body:new FormData(addForm)
+				})
+				console.log(res);
+				handleQuery();
+
+			})
+			document.addEventListener("DOMContentLoaded", function (e) {
+				handleQuery();
+			})
+			function 
+		</script>
 	</body>
 </html>
