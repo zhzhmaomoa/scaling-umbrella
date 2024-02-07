@@ -1,13 +1,14 @@
-export async function handleQuery(){
-    const res = await fetch("/friendlyOctoCouscous/api/memory",{
+export async function handleQuery(pageNum,pageSize,generateTable){
+    const res = await fetch("/friendlyOctoCouscous/api/memory?pageNum="+pageNum+"&pageSize="+pageSize,{
         method:"GET",
     });
     const res2 = await res.text();
     const result = JSON.parse(res2);
     console.log(result);
     if(result.code === 200){
-        return result.data;
+        generateTable(pageNum,result.data);
     }else{
-        return [];
+        generateTable(pageNum,[]);
+
     }
 }

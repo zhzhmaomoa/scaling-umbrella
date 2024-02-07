@@ -18,12 +18,32 @@
 				padding: 0.25rem;
 				text-align: left;
 				border: 1px solid #ccc;
+				height: 3rem;
 			}
+			.table-img{
+				object-fit: contain;
+				height: 100%;
+			}
+			.tdInTfoot{
+				border: 0;
+				padding: 0;
+				position: relative;
+				height: 0;
+			}
+			.leaf{
+				position:absolute;
+				top:0;
+			}
+			.leaf:nth-child(2){
+				right: 1rem;
+			}
+			
 		</style>
 	<head>
 	<body>
 		<lay-out>
-			<div  class="table-x">
+			<div  class="table-x" id="table-x">
+				<form id="addForm"></form>
 				<table class="table">
 					<caption class="caption">MEMORY</caption>
 					<thead>
@@ -35,49 +55,91 @@
 							<th>operation</th>
 						</tr>
 					</thead>
-					<tbody>
-						<form id="addForm">
-							<tr>
-								<td></td>
-								<td>
-									<input name="date"/>
-								</td>
-								<td>
-									<input name="title">
-								</td>
-								<td>
-									<input name="src">
-								</td>
-								<td>
-									<button>save</button>
-								</td>
-							</tr>
-						</form>
+					<tbody id="tbody">
+
 					</tbody>
+					<tfoot>
+						<tr>
+							<td colspan="5" class="tdInTfoot">
+								<le-af class="leaf"></le-af>
+								<le-af class="leaf"></le-af>
+							</td>
+						</tr>
+					</tfoot>
 				</table>
 			</div>
-
 		</lay-out>
 		<script type="module">
 			import {handleQuery} from  "/api/index.js"
-			import Layout from "/layout.js";
+			import Layout from "/components/layout.js";
+			import Leaf from "/components/leaf.js"
 			customElements.define("lay-out",Layout);
-			
+			customElements.define("le-af",Leaf)
+			const tbody = document.querySelector("#tbody");
 			const addForm = document.querySelector("#addForm");
-			addForm.addEventListener("submit",async (e)=>{
-				e.preventDefault();
-				const res = await fetch("/friendlyOctoCouscous/api/memory",{
-					method:"POST",
-					body:new FormData(addForm)
-				})
-				console.log(res);
-				handleQuery();
-
-			})
+			function generateTable(pageNum,data){
+				while(tbody.firstChild){
+					tbody.removeChild(tbody.firstChild);
+				}
+				if(pageNum === 1){
+					const id = addForm.getAttribute("id");
+					tbody.insertRow(0);
+					tbody.rows[0].insertCell(0);
+					tbody.rows[0].cells[0].append("add");
+					tbody.rows[0].insertCell(1);
+					const dateInput = document.createElement("input");
+					dateInput.name = "date";
+					dateInput.setAttribute("form",id)
+					tbody.rows[0].cells[1].append(dateInput)
+					tbody.rows[0].insertCell(2);
+					const titleInput = document.createElement("input");
+					titleInput.name = "title";
+					titleInput.setAttribute("form",id)
+					tbody.rows[0].cells[2].append(titleInput)
+					tbody.rows[0].insertCell(3);
+					const srcInput = document.createElement("input");
+					srcInput.name = "src";
+					srcInput.setAttribute("form",id)
+					tbody.rows[0].cells[3].append(srcInput)
+					tbody.rows[0].insertCell(4);
+					const saveBtn = document.createElement("button");
+					saveBtn.append("save");
+					saveBtn.setAttribute("form",id)
+					tbody.rows[0].cells[4].append(saveBtn)
+					addForm.addEventListener("submit",async (e)=>{
+						e.preventDefault();
+						const res = await fetch("/friendlyOctoCouscous/api/memory",{
+							method:"POST",
+							body:new FormData(addForm)
+						})
+						console.log(res);
+						handleQuery(1,5,generateTable);
+					})
+				}
+				for(let i = 0; i < data.length; i++){
+					tbody.insertRow(i+1);
+					tbody.rows[i+1].insertCell(0);
+					tbody.rows[i+1].cells[0].append(data[i]['id'])
+					tbody.rows[i+1].insertCell(1);
+					tbody.rows[i+1].cells[1].append(data[i]['date'])
+					tbody.rows[i+1].insertCell(2);
+					tbody.rows[i+1].cells[2].append(data[i]['title'])
+					tbody.rows[i+1].insertCell(3);
+					const img = document.createElement("img");
+					img.classList.add("table-img")
+					img.src = data[i]['src'];
+					tbody.rows[i+1].cells[3].append(img);
+					tbody.rows[i+1].insertCell(4);
+					const editBtn = document.createElement("button");
+					editBtn.append("edit");
+					const deleteBtn = document.createElement("button");
+					deleteBtn.append("delete");
+					tbody.rows[i+1].cells[4].append(editBtn,deleteBtn)
+				}
+			}
 			document.addEventListener("DOMContentLoaded", function (e) {
-				handleQuery();
+				handleQuery(1,5,generateTable);
 			})
-			function 
 		</script>
 	</body>
 </html>
