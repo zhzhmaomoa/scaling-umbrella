@@ -11,7 +11,7 @@ template.innerHTML = /*html*/`
             position: absolute;
             width:1rem;
             height: 1.5rem;
-            background-color:#fbb612;
+            background-color:#b7ae8f;
         }
         .leaf-x::after{
             content:"";
@@ -21,16 +21,17 @@ template.innerHTML = /*html*/`
             transform:rotate(45deg);
             background-color:#2e317c;
         }
-        .leaf-x:hover .leaf-x::before{
-            background-color:black;  
+        .leaf-x:active{
+            height:2rem;
         }
     </style>
     <div class="leaf-x"></div>
 `
-export default class Leaf extends HTMLElement{
+class Leaf extends HTMLElement{
     constructor(){
         super();
         this._shadowRoot = this.attachShadow({mode:"closed"});
         this._shadowRoot.appendChild(template.content.cloneNode(true))
     }
 }
+customElements.define("le-af",Leaf)

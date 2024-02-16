@@ -20,9 +20,24 @@
 				border: 1px solid #ccc;
 				height: 3rem;
 			}
+			.table-row .input{
+				display: none;
+			}
+			.table-row.active .input{
+				display: inline-block;
+			}
+			.table-row.active .text{
+				display: none;
+			}
 			.table-img{
 				object-fit: contain;
 				height: 100%;
+			}
+			.operation-btn{
+				display: none;
+			}
+			.operation-btn.active{
+				display: inline-block;
 			}
 			.tdInTfoot{
 				border: 0;
@@ -37,13 +52,16 @@
 			.leaf:nth-child(2){
 				right: 1rem;
 			}
-			
+			.leaf.inActive{
+				visibility: hidden;
+			}
 		</style>
 	<head>
 	<body>
 		<lay-out>
 			<div  class="table-x" id="table-x">
 				<form id="addForm"></form>
+				<form id="editFormForId"></form>
 				<table class="table">
 					<caption class="caption">MEMORY</caption>
 					<thead>
@@ -61,26 +79,87 @@
 					<tfoot>
 						<tr>
 							<td colspan="5" class="tdInTfoot">
-								<le-af class="leaf"></le-af>
-								<le-af class="leaf"></le-af>
+								<le-af class="leaf" id="leafLeft"></le-af>
+								<le-af class="leaf" id="leafRight"></le-af>
 							</td>
 						</tr>
 					</tfoot>
 				</table>
 			</div>
 		</lay-out>
+		<script type="module" src="/components/layout.js"></script>
+		<script type="module" src="/components/leaf.js"></script>
 		<script type="module">
 			import {handleQuery} from  "/api/index.js"
-			import Layout from "/components/layout.js";
-			import Leaf from "/components/leaf.js"
-			customElements.define("lay-out",Layout);
-			customElements.define("le-af",Leaf)
+			let pageNum = 1;
+			let pageSize = 5;
+			let tableRowLength = 0;
 			const tbody = document.querySelector("#tbody");
 			const addForm = document.querySelector("#addForm");
+			const leafLeft = document.querySelector("#leafLeft");
+			const leafRight = document.querySelector("#leafRight");
 			function generateTable(pageNum,data){
 				while(tbody.firstChild){
 					tbody.removeChild(tbody.firstChild);
 				}
+				for(let i = 0; i < data.length; i++){
+					tbody.insertRow(i);
+
+					tbody.rows[i].insertCell(0);
+					const idInput = document.createElement("input")
+					idInput.name="id"
+					idInput.setAttribute("type","hidden");
+					idInput.setAttribute("form","editFormForId"+data[i]['id']);
+					idInput.setAttribute("value",data[i]['id'])
+					idInput.classList.add("input");
+					const idText = document.createElement("span")
+					idText.append(data[i]['id'])
+					tbody.rows[i].cells[0].append(idText,idInput)
+
+					tbody.rows[i].insertCell(1);
+					const dateInput = document.createElement("input");
+					dateInput.name ="date";
+					dateInput.setAttribute("form","editFormForId"+data[i]['id']);
+					dateInput.setAttribute("value",data[i]['date'])
+					dateInput.classList.add("input");
+					const dateText = document.createElement("span")
+					dateText.append(data[i]['date'])
+					dateText.classList.add("text");
+					tbody.rows[i].cells[1].append(dateText,dateInput)
+
+					tbody.rows[i].insertCell(2);
+					const titleInput = document.createElement("input");
+					titleInput.name ="title";
+					titleInput.setAttribute("form","editFormForId"+data[i]['id']);
+					titleInput.setAttribute("value",data[i]['title'])
+					titleInput.classList.add("input");
+					const titleText = document.createElement("span")
+					titleText.append(data[i]['title'])
+					titleText.classList.add("text");
+					tbody.rows[i].cells[2].append(titleText,titleInput)
+
+					tbody.rows[i].insertCell(3);
+					const srcInput = document.createElement("input");
+					srcInput.name = "src";
+					srcInput.setAttribute("form","editFormForId"+data[i]['id']);
+					srcInput.setAttribute("type","file");
+					srcInput.setAttribute("accept","image/*");
+					srcInput.setAttribute("value",data[i]['src'])
+					srcInput.classList.add("input");
+					const img = document.createElement("img");
+					img.classList.add("table-img","text")
+					img.src = data[i]['src'];
+					tbody.rows[i].cells[3].append(img,srcInput);
+
+					tbody.rows[i].insertCell(4);
+					tbody.rows[i].classList.add("table-row")
+					const tableRow = tbody.rows[i]
+					const editBtn =generateEditBtn(data[i],tableRow)
+					const deleteBtn = generateDeleteBtn(data[i]);
+					tbody.rows[i].cells[4].append(editBtn,deleteBtn)
+				}
+				tableRowLength = data.length;
+				handleLeaf();
 				if(pageNum === 1){
 					const id = addForm.getAttribute("id");
 					tbody.insertRow(0);
@@ -100,6 +179,8 @@
 					const srcInput = document.createElement("input");
 					srcInput.name = "src";
 					srcInput.setAttribute("form",id)
+					srcInput.setAttribute("type","file");
+					srcInput.setAttribute("accept","image/*");
 					tbody.rows[0].cells[3].append(srcInput)
 					tbody.rows[0].insertCell(4);
 					const saveBtn = document.createElement("button");
@@ -113,32 +194,95 @@
 							body:new FormData(addForm)
 						})
 						console.log(res);
-						handleQuery(1,5,generateTable);
+						handleQuery(pageNum,pageSize,generateTable);
 					})
 				}
-				for(let i = 0; i < data.length; i++){
-					tbody.insertRow(i+1);
-					tbody.rows[i+1].insertCell(0);
-					tbody.rows[i+1].cells[0].append(data[i]['id'])
-					tbody.rows[i+1].insertCell(1);
-					tbody.rows[i+1].cells[1].append(data[i]['date'])
-					tbody.rows[i+1].insertCell(2);
-					tbody.rows[i+1].cells[2].append(data[i]['title'])
-					tbody.rows[i+1].insertCell(3);
-					const img = document.createElement("img");
-					img.classList.add("table-img")
-					img.src = data[i]['src'];
-					tbody.rows[i+1].cells[3].append(img);
-					tbody.rows[i+1].insertCell(4);
-					const editBtn = document.createElement("button");
-					editBtn.append("edit");
-					const deleteBtn = document.createElement("button");
-					deleteBtn.append("delete");
-					tbody.rows[i+1].cells[4].append(editBtn,deleteBtn)
+			}
+			function generateEditBtn(rowData,tableRow){
+				const editBtn = document.createElement("button")
+				editBtn.append("edit")
+				editBtn.classList.add("operation-btn",'active')
+				editBtn.addEventListener("click",function(e){
+					editBtn.classList.remove("active")
+					confirmBtn.classList.add("active")
+					cancelBtn.classList.add("active")
+					tableRow.classList.add("active");
+				})
+				const confirmBtn = document.createElement("button")
+				confirmBtn.append("save")
+				confirmBtn.classList.add("operation-btn")
+				confirmBtn.addEventListener("click",async function(e){
+					await fetch("/friendlyOctoCouscous/api/memory",{
+						method:'PUT',
+						headers:{ "Content-Type": "application/json"},
+						body:JSON.stringify(rowData)
+					})
+					handleQuery(pageNum,pageSize,generateTable)
+				})
+				const cancelBtn = document.createElement("button")
+				cancelBtn.append("cancel");
+				cancelBtn.classList.add("operation-btn")
+				cancelBtn.addEventListener("click",function(e){
+					editBtn.classList.add("active")
+					confirmBtn.classList.remove("active")
+					cancelBtn.classList.remove("active")
+					tableRow.classList.remove("active")
+				})
+				const x = document.createElement("span");
+				x.append(editBtn,confirmBtn,cancelBtn);
+				return x;
+			}
+			function generateDeleteBtn(rowData){
+				const deleteBtn = document.createElement("button");
+				deleteBtn.append("delete");
+				deleteBtn.classList.add("operation-btn","active");
+				deleteBtn.addEventListener("click",function(e){
+					deleteBtn.classList.remove("active");
+					confirmBtn.classList.add("active");
+					cancelBtn.classList.add("active")
+				})
+				const confirmBtn = document.createElement("button");
+				confirmBtn.append("confirm delete!");
+				confirmBtn.classList.add("operation-btn");
+				confirmBtn.addEventListener("click",async function(e){
+					console.log(rowData);
+					await fetch("/friendlyOctoCouscous/api/memory",{
+						method:'DELETE',
+						headers:{ "Content-Type": "application/json"},
+						body:JSON.stringify({id:rowData.id,src:rowData.src})
+					})
+					handleQuery(pageNum,pageSize,generateTable)
+				})
+				const cancelBtn = document.createElement("button");
+				cancelBtn.append("repent");
+				cancelBtn.classList.add("operation-btn");
+				cancelBtn.addEventListener("click",function(e){
+					deleteBtn.classList.add("active");
+					confirmBtn.classList.remove("active");
+					cancelBtn.classList.remove("active")
+				})
+				const x = document.createElement("span");
+				x.append(deleteBtn,confirmBtn,cancelBtn);
+				return x;
+			}
+			function handleLeaf(){
+				leafLeft.classList.remove("inActive");
+				leafRight.classList.remove("inActive");
+				if(pageNum===1){
+					leafLeft.classList.add("inActive");
+				}
+				if(tableRowLength < pageSize){
+					leafRight.classList.add("inActive")
 				}
 			}
 			document.addEventListener("DOMContentLoaded", function (e) {
-				handleQuery(1,5,generateTable);
+				handleQuery(pageNum,pageSize,generateTable);
+			})
+			leafLeft.addEventListener("click",function(e){
+				handleQuery(--pageNum,pageSize,generateTable)
+			})
+			leafRight.addEventListener("click",function(e){
+				handleQuery(++pageNum,pageSize,generateTable)
 			})
 		</script>
 	</body>

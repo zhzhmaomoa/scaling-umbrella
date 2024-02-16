@@ -32,10 +32,11 @@ template.innerHTML = /*html*/`
         </main>
     </div>
 `;
-export default class Layout extends HTMLElement{
+class Layout extends HTMLElement{
     constructor(){
         super();
         this._shadowRoot = this.attachShadow({mode:"closed"})
         this._shadowRoot.appendChild(template.content.cloneNode(true))
     }
 }
+customElements.define("lay-out",Layout);
