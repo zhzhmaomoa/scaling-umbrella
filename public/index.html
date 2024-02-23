@@ -3,327 +3,38 @@
 	<head>
 		<title>后台-memory</title>
 		<link rel="stylesheet" href="/public.css"/>
-		<style>
-			.table-x{
-				padding:0 1rem;
-			}
-			.table{
-				border-collapse: collapse;
-				width: 100%;
-			}
-			.caption{
-				margin: 1rem 0;
-			}
-			th, td {
-				padding: 0.25rem;
-				text-align: left;
-				border: 1px solid #ccc;
-				height: 3rem;
-			}
-			.table-row .input{
-				display: none;
-			}
-			.table-row.active .input{
-				display: inline-block;
-			}
-			.table-row.active .text{
-				display: none;
-			}
-			.table-img{
-				object-fit: contain;
-				height: 100%;
-				vertical-align: middle;
-			}
-			.operation-btn{
-				display: none;
-			}
-			.operation-btn.active{
-				display: inline-block;
-			}
-			.tdInTfoot{
-				border: 0;
-				padding: 0;
-				position: relative;
-				height: 0;
-			}
-			.leaf{
-				position:absolute;
-				top:0;
-			}
-			.leaf:nth-child(2){
-				right: 1rem;
-			}
-			.leaf.inActive{
-				visibility: hidden;
-			}
-		</style>
 	<head>
 	<body>
-		<lay-out>
-			<div  class="table-x" id="table-x">
-				<form id="addForm"></form>
-				<section id="editForms"></section>
-				<table class="table">
-					<caption class="caption">MEMORY</caption>
-					<thead>
-						<tr>
-							<th>ID</th>
-							<th>date</th>
-							<th>title</th>
-							<th>src</th>
-							<th>operation</th>
-						</tr>
-					</thead>
-					<tbody id="tbody">
-
-					</tbody>
-					<tfoot>
-						<tr>
-							<td colspan="5" class="tdInTfoot">
-								<le-af class="leaf" id="leafLeft"></le-af>
-								<le-af class="leaf" id="leafRight"></le-af>
-							</td>
-						</tr>
-					</tfoot>
-				</table>
-			</div>
-		</lay-out>
-		<script type="module" src="/components/layout.js"></script>
-		<script type="module" src="/components/leaf.js"></script>
+		<com-layout>
+			<com-table id="table"></com-table>
+		</com-layout>
+		<script type="module" src="/components/comTable.js"></script>
+		<script type="module" src="/components/comLayout.js"></script>
 		<script type="module">
-			import {handleQuery} from  "/api/index.js"
-			import {throttle} from "/common.js"
-			let pageNum = 1,
-				pageSize = 5,
-				tableRowLength = 0,
-				imgPreviewArr = [];
-			const tbody = document.querySelector("#tbody"),
-				addForm = document.querySelector("#addForm"),
-				editForms = document.querySelector("#editForms")
-				leafLeft = document.querySelector("#leafLeft"),
-				leafRight = document.querySelector("#leafRight");
-			function generateTable(pageNum,data){
-				while(tbody.firstChild){
-					tbody.removeChild(tbody.firstChild);
+			import {asyncQuery,asyncAdd,asyncEdit,asyncDeleteOne} from "/api/index.js"
+			const table = document.querySelector("#table");
+			table.setAttribute("caption","Memory")
+			table.setAttribute("content",JSON.stringify({
+				"fields":{
+					'id':{
+						type:"hidden"
+					},
+					'date':{
+						type:"date"
+					},
+					'title':{},
+					'src':{
+						type:"file",
+						accept:"image/*",
+					},
+				},
+				'events':{
+					asyncQuery:asyncQuery.toString(),
+					asyncAdd:asyncAdd.toString(),
+					asyncEdit:asyncEdit.toString(),
+					asyncDeleteOne:asyncDeleteOne.toString()
 				}
-				while(editForms.firstChild){
-					editForms.removeChild(editForms.firstChild)
-				}
-				for(let i = 0; i < imgPreviewArr.length;i++){
-					window.URL.revokeObjectURL(imgPreviewArr[i])
-				}
-				for(let i = 0; i < data.length; i++){
-					const form = document.createElement("form")
-					form.setAttribute("id","editFormId"+data[i]['id'])
-					editForms.append(form)
-
-					tbody.insertRow(i);
-
-					tbody.rows[i].insertCell(0);
-					const idInput = document.createElement("input")
-					idInput.name="id"
-					idInput.setAttribute("type","hidden");
-					idInput.setAttribute("form","editFormId"+data[i]['id']);
-					idInput.setAttribute("value",data[i]['id'])
-					idInput.classList.add("input");
-					const idText = document.createElement("span")
-					idText.append(data[i]['id'])
-					tbody.rows[i].cells[0].append(idText,idInput)
-
-					tbody.rows[i].insertCell(1);
-					const dateInput = document.createElement("input");
-					dateInput.name ="date";
-					dateInput.setAttribute("type","date")
-					dateInput.setAttribute("form","editFormId"+data[i]['id']);
-					dateInput.setAttribute("value",data[i]['date'])
-					dateInput.classList.add("input");
-					const dateText = document.createElement("span")
-					dateText.append(data[i]['date'])
-					dateText.classList.add("text");
-					tbody.rows[i].cells[1].append(dateText,dateInput)
-
-					tbody.rows[i].insertCell(2);
-					const titleInput = document.createElement("input");
-					titleInput.name ="title";
-					titleInput.setAttribute("form","editFormId"+data[i]['id']);
-					titleInput.setAttribute("value",data[i]['title'])
-					titleInput.classList.add("input");
-					const titleText = document.createElement("span")
-					titleText.append(data[i]['title'])
-					titleText.classList.add("text");
-					tbody.rows[i].cells[2].append(titleText,titleInput)
-
-					tbody.rows[i].insertCell(3);
-					const srcInput = document.createElement("input");
-					srcInput.name = "src";
-					srcInput.setAttribute("form","editFormId"+data[i]['id']);
-					srcInput.setAttribute("type","file");
-					srcInput.setAttribute("accept","image/*");
-					srcInput.setAttribute("value",data[i]['src'])
-					srcInput.classList.add("input");
-					const imgEditing = document.createElement("img");
-					imgEditing.classList.add("input","table-img")
-					imgEditing.setAttribute("src",data[i]['src'])
-					srcInput.addEventListener("change",function(e){
-						const imgPreview = window.URL.createObjectURL(e.target.files[0]);
-						imgPreviewArr.push(imgPreview)
-						imgEditing.setAttribute("src",imgPreview)
-					})
-					const img = document.createElement("img");
-					img.classList.add("table-img","text")
-					img.src = data[i]['src'];
-					tbody.rows[i].cells[3].append(img,srcInput,imgEditing);
-
-					tbody.rows[i].insertCell(4);
-					tbody.rows[i].classList.add("table-row")
-					const tableRow = tbody.rows[i]
-					const editBtn =generateEditBtn(data[i],tableRow)
-					const deleteBtn = generateDeleteBtn(data[i]);
-					tbody.rows[i].cells[4].append(editBtn,deleteBtn)
-				}
-				tableRowLength = data.length;
-				handleLeaf();
-				if(pageNum === 1){
-					const id = addForm.getAttribute("id");
-					tbody.insertRow(0);
-					tbody.rows[0].insertCell(0);
-					tbody.rows[0].cells[0].append("add");
-					tbody.rows[0].insertCell(1);
-					const dateInput = document.createElement("input");
-					dateInput.setAttribute("type","date")
-					dateInput.name = "date";
-					dateInput.setAttribute("form",id)
-					tbody.rows[0].cells[1].append(dateInput)
-					tbody.rows[0].insertCell(2);
-					const titleInput = document.createElement("input");
-					titleInput.name = "title";
-					titleInput.setAttribute("form",id)
-					tbody.rows[0].cells[2].append(titleInput)
-					tbody.rows[0].insertCell(3);
-					const srcInput = document.createElement("input");
-					srcInput.name = "src";
-					srcInput.setAttribute("form",id)
-					srcInput.setAttribute("type","file");
-					srcInput.setAttribute("accept","image/*");
-					const img = document.createElement("img");
-					srcInput.addEventListener("change",function(e){
-						const imgPreview = window.URL.createObjectURL(e.target.files[0]);
-						imgPreviewArr.push(imgPreview)
-						img.setAttribute("src",imgPreview)
-						img.classList.add("table-img")
-					})
-					tbody.rows[0].cells[3].append(srcInput,img)
-					tbody.rows[0].insertCell(4);
-					const saveBtn = document.createElement("button");
-					saveBtn.append("save");
-					saveBtn.setAttribute("form",id)
-					tbody.rows[0].cells[4].append(saveBtn)
-					addForm.addEventListener("submit",(e)=>{
-						e.preventDefault();
-						throttle(async (e)=>{
-							saveBtn.setAttribute("disabled",true)
-							const res = await fetch("/friendlyOctoCouscous/api/memory",{
-								method:"POST",
-								body:new FormData(addForm)
-							})
-							handleQuery(pageNum,pageSize,generateTable);
-						})
-					})
-				}
-			}
-			function generateEditBtn(rowData,tableRow){
-				const editForm = document.querySelector("#editFormId"+rowData['id'])
-				editForm.addEventListener("submit",function(e){
-					e.preventDefault();
-					throttle(async (e)=>{
-						confirmBtn.setAttribute("disabled",true)
-						await fetch("/friendlyOctoCouscous/api/memory",{
-							method:'PUT',
-							body:new FormData(editForm)
-						})
-						handleQuery(pageNum,pageSize,generateTable)
-					})
-				})
-				const editBtn = document.createElement("button")
-				editBtn.append("edit")
-				editBtn.classList.add("operation-btn",'active')
-				editBtn.addEventListener("click",function(e){
-					editBtn.classList.remove("active")
-					confirmBtn.classList.add("active")
-					cancelBtn.classList.add("active")
-					tableRow.classList.add("active");
-				})
-				const confirmBtn = document.createElement("button")
-				confirmBtn.append("save")
-				confirmBtn.classList.add("operation-btn")
-				confirmBtn.setAttribute("form","editFormId"+rowData['id']);
-				const cancelBtn = document.createElement("button")
-				cancelBtn.append("cancel");
-				cancelBtn.classList.add("operation-btn")
-				cancelBtn.addEventListener("click",function(e){
-					editBtn.classList.add("active")
-					confirmBtn.classList.remove("active")
-					cancelBtn.classList.remove("active")
-					tableRow.classList.remove("active")
-				})
-				const x = document.createElement("span");
-				x.append(editBtn,confirmBtn,cancelBtn);
-				return x;
-			}
-			function generateDeleteBtn(rowData){
-				const deleteBtn = document.createElement("button");
-				deleteBtn.append("delete");
-				deleteBtn.classList.add("operation-btn","active");
-				deleteBtn.addEventListener("click",function(e){
-					deleteBtn.classList.remove("active");
-					confirmBtn.classList.add("active");
-					cancelBtn.classList.add("active")
-				})
-				const confirmBtn = document.createElement("button");
-				confirmBtn.append("confirm delete!");
-				confirmBtn.classList.add("operation-btn");
-				confirmBtn.addEventListener("click",function(e){
-					throttle(async function(e){
-						confirmBtn.setAttribute("disabled",true)
-						await fetch("/friendlyOctoCouscous/api/memory",{
-							method:'DELETE',
-							headers:{ "Content-Type": "application/json"},
-							body:JSON.stringify({id:rowData.id,src:rowData.src})
-						})
-						handleQuery(pageNum,pageSize,generateTable)
-					})
-				})
-				const cancelBtn = document.createElement("button");
-				cancelBtn.append("repent");
-				cancelBtn.classList.add("operation-btn");
-				cancelBtn.addEventListener("click",function(e){
-					deleteBtn.classList.add("active");
-					confirmBtn.classList.remove("active");
-					cancelBtn.classList.remove("active")
-				})
-				const x = document.createElement("span");
-				x.append(deleteBtn,confirmBtn,cancelBtn);
-				return x;
-			}
-			function handleLeaf(){
-				leafLeft.classList.remove("inActive");
-				leafRight.classList.remove("inActive");
-				if(pageNum===1){
-					leafLeft.classList.add("inActive");
-				}
-				if(tableRowLength < pageSize){
-					leafRight.classList.add("inActive")
-				}
-			}
-			document.addEventListener("DOMContentLoaded", function (e) {
-				handleQuery(pageNum,pageSize,generateTable);
-			})
-			leafLeft.addEventListener("click",function(e){
-				handleQuery(--pageNum,pageSize,generateTable)
-			})
-			leafRight.addEventListener("click",function(e){
-				handleQuery(++pageNum,pageSize,generateTable)
-			})
+			}))
 		</script>
 	</body>
 </html>

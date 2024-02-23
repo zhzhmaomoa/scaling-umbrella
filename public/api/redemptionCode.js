@@ -1,4 +1,4 @@
-export async function asyncQuery(pageNum,pageSize,handleTbody){
+export async function asyncQuery(pageNum,pageSize){
     try {
         const res = await fetch("/friendlyOctoCouscous/api/redemptionCode?pageNum="+pageNum+"&pageSize="+pageSize,{
             method:"GET",
@@ -26,9 +26,25 @@ export async function asyncAdd(addForm){
         console.error(error)
     }
 }
-export function asyncDeleteOne(addForm,pageNum,pageSize,){
-
+export async function asyncDeleteOne(rowData){
+    try {
+        await fetch("/friendlyOctoCouscous/api/redemptionCode",{
+            method:'DELETE',
+            headers:{ "Content-Type": "application/json"},
+            body:JSON.stringify({id:rowData.id})
+        })
+    } catch (error) {
+        console.error(error)
+    }
 }
-export function asyncEdit(addForm,pageNum,pageSize,){
+export async function asyncEdit(editForm){
+    try {
+        await fetch("/friendlyOctoCouscous/api/redemptionCode",{
+            method:'PUT',
+            body:new FormData(editForm)
+        })
+    } catch (error) {
+        console.error(error)
+    }
 
 }

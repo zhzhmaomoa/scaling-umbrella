@@ -89,12 +89,16 @@ class ComTable extends HTMLElement{
         this.$theadContent = this._shadowRoot.querySelector("#theadContent")
         this.$tbody = this._shadowRoot.querySelector("#tbody")
         this.$addForm = this._shadowRoot.querySelector("#addForm")
+        this.$editForms = this._shadowRoot.querySelector("#editForms");
         this.$tdInTfoot = this._shadowRoot.querySelector(".tdInTfoot")
+        this.$leafLeft = this._shadowRoot.querySelector("#leafLeft")
+		this.$leafRight = this._shadowRoot.querySelector("#leafRight");
         this.tableStructure = {};
         this.tableStructureKeys = [];
         this.pageNum = 1;
         this.pageSize = 5;
         this.queryResult = [];
+        this.imgPreviewArr = [];
         this.asyncQuery=async function(){};
         this.asyncAdd=async function(){};
         this.asyncEdit=async function(){};
@@ -112,26 +116,32 @@ class ComTable extends HTMLElement{
                 const {fields,events} = JSON.parse(newVal);
                 console.log(newVal)
                 this.handleSetEvents(events)
-                this.handleTbody(fields);
+                this.tableStructure = fields;
+                this.tableStructureKeys = Object.keys(fields);
+                this.handleTbody();
                 break;
         }
     }
     handleSetCaption(newCaption){
         this.$caption.replaceChildren(newCaption);
     }
-    async handleTbody(newVal){
-        this.tableStructure = newVal;
-        this.tableStructureKeys = Object.keys(this.tableStructure);
+    async handleTbody(){
         this.$tdInTfoot.setAttribute("colspan",this.tableStructureKeys.length+1)
         this.queryResult =await this.asyncQuery(this.pageNum,this.pageSize);
+        this.$editForms.replaceChildren();
         this.$tbody.replaceChildren();
+        for(let i = 0; i < this.imgPreviewArr.length;i++){
+            window.URL.revokeObjectURL(this.imgPreviewArr[i])
+        }
         this.handleSetThead();
         this.handleSetQueryResult()
         if(this.pageNum === 1){
             this.handleSetAddingRow()
         }
+        this.handleSetLeaf();
     }
     handleSetThead(){
+        this.$theadContent.replaceChildren();
         for(let textNode of this.tableStructureKeys){
             const th = document.createElement("th");
             th.append(textNode);
@@ -171,20 +181,139 @@ class ComTable extends HTMLElement{
         for(let i = 0; i < this.queryResult.length; i++){
             const row = this.$tbody.insertRow(i);
             let cellIndex = 0;
-            for(let j of this.tableStructureKeys){
-                const text = document.createElement("span");
-                text.append(this.queryResult[i][j])
+            for(let [eleName,properties] of Object.entries(this.tableStructure)){
+                const input = document.createElement("input")
+                input.setAttribute("name",eleName);
+                input.setAttribute("form","editFormId"+this.queryResult[i].id);
+                let type;
+                for(let [attributeName,attributeValue] of Object.entries(properties)){
+                    input.setAttribute(attributeName,attributeValue)
+                    if(attributeName==='type'){
+                        type = attributeValue;
+                    }
+                }  
+                input.setAttribute("value",this.queryResult[i][eleName])
+                input.classList.add("input");
+
                 const cell = row.insertCell(cellIndex)
-                cell.append(text);
+                if(type==='file'){
+                    const imgEditing = document.createElement("img");
+					imgEditing.classList.add("input","table-img")
+					imgEditing.setAttribute("src",this.queryResult[i][eleName])
+					input.addEventListener("change",(e)=>{
+						const imgPreview = window.URL.createObjectURL(e.target.files[0]);
+						this.imgPreviewArr.push(imgPreview)
+						imgEditing.setAttribute("src",imgPreview)
+					})
+					const img = document.createElement("img");
+					img.classList.add("table-img","text")
+                    img.setAttribute("src",this.queryResult[i][eleName])
+                    cell.append(img,input,imgEditing);
+                }else{
+                    const text = document.createElement("span");
+                    if(eleName!=='id'){
+                        text.classList.add("text")
+                    }
+                    text.append(this.queryResult[i][eleName])
+                    cell.append(text,input);
+                }
                 cellIndex++;
             }
+            row.classList.add("table-row");
             const cell = row.insertCell(cellIndex)
-            cell.append("操作")
+			const editBtn =this.generateEditBtn(this.queryResult[i].id,row)
+            const deleteBtn = this.generateDeleteBtn(this.queryResult[i]);
+            cell.append(editBtn,deleteBtn)
+        }
+    }
+    generateEditBtn(rowId,row){
+        const editForm = document.createElement("form")
+        editForm.setAttribute("id","editFormId"+rowId)
+        editForm.addEventListener("submit",(e)=>{
+            e.preventDefault();
+            throttle(async (e)=>{
+                await this.asyncEdit(editForm);
+                this.handleTbody();
+            })
+        })
+        this.$editForms.append(editForm)
+        const editBtn = document.createElement("button")
+        editBtn.append("edit")
+        editBtn.classList.add("operation-btn",'active')
+        editBtn.addEventListener("click",function(e){
+            editBtn.classList.remove("active")
+            confirmBtn.classList.add("active")
+            cancelBtn.classList.add("active")
+            row.classList.add("active");
+        })
+        const confirmBtn = document.createElement("button")
+        confirmBtn.append("save")
+        confirmBtn.classList.add("operation-btn")
+        confirmBtn.setAttribute("form","editFormId"+rowId);
+        const cancelBtn = document.createElement("button")
+        cancelBtn.append("cancel");
+        cancelBtn.classList.add("operation-btn")
+        cancelBtn.addEventListener("click",function(e){
+            editBtn.classList.add("active")
+            confirmBtn.classList.remove("active")
+            cancelBtn.classList.remove("active")
+            row.classList.remove("active")
+        })
+        const x = document.createElement("span");
+        x.append(editBtn,confirmBtn,cancelBtn);
+        return x;
+    }
+    generateDeleteBtn(rowData){
+        const deleteBtn = document.createElement("button");
+        deleteBtn.append("delete");
+        deleteBtn.classList.add("operation-btn","active");
+        deleteBtn.addEventListener("click",function(e){
+            deleteBtn.classList.remove("active");
+            confirmBtn.classList.add("active");
+            cancelBtn.classList.add("active")
+        })
+        const confirmBtn = document.createElement("button");
+        confirmBtn.append("confirm delete!");
+        confirmBtn.classList.add("operation-btn");
+        confirmBtn.addEventListener("click",(e)=>{
+            throttle(async ()=>{
+                await this.asyncDeleteOne(rowData);
+                this.handleTbody();
+             })
+        })
+        const cancelBtn = document.createElement("button");
+        cancelBtn.append("repent");
+        cancelBtn.classList.add("operation-btn");
+        cancelBtn.addEventListener("click",function(e){
+            deleteBtn.classList.add("active");
+            confirmBtn.classList.remove("active");
+            cancelBtn.classList.remove("active")
+        })
+        const x = document.createElement("span");
+        x.append(deleteBtn,confirmBtn,cancelBtn);
+        return x;
+    }
+    handleSetLeaf(){
+        this.$leafLeft.classList.remove("inActive");
+        this.$leafRight.classList.remove("inActive");
+        if(this.pageNum===1){
+            this.$leafLeft.classList.add("inActive");
+        }
+        if(this.queryResult.length < this.pageSize){
+            this.$leafRight.classList.add("inActive")
         }
     }
     handleSetEvents(events){
         const {asyncQuery,asyncAdd,asyncEdit,asyncDeleteOne} = events;
         this.asyncQuery=new Function('return '+asyncQuery)();
+        this.$leafLeft.addEventListener("click",()=>{
+            this.pageNum--;
+            this.handleTbody()
+        })
+        this.$leafRight.addEventListener("click",()=>{
+            this.pageNum++;
+            this.handleTbody()
+        })
         this.asyncAdd=new Function('return '+asyncAdd)();
         this.$addForm.addEventListener("submit",(e)=>{
             e.preventDefault();
@@ -195,6 +324,11 @@ class ComTable extends HTMLElement{
         })
         this.asyncEdit=new Function('return '+asyncEdit)();
         this.asyncDeleteOne=new Function('return '+asyncDeleteOne)();
+    }
+    disconnectedCallback(){
+        for(let i = 0; i < this.imgPreviewArr.length;i++){
+            window.URL.revokeObjectURL(this.imgPreviewArr[i])
+        }
     }
 }
 customElements.define("com-table",ComTable);
