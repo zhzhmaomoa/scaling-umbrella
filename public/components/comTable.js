@@ -18,13 +18,13 @@ template.innerHTML = /*html*/`
             border: 1px solid #ccc;
             height: 3rem;
         }
-        .table-row .input{
+        .table-row .modificationArea{
             display: none;
         }
-        .table-row.active .input{
+        .table-row.active .modificationArea{
             display: inline-block;
         }
-        .table-row.active .text{
+        .table-row.active .exhibitionArea{
             display: none;
         }
         .table-img{
@@ -114,7 +114,6 @@ class ComTable extends HTMLElement{
                 break;
             case 'content':
                 const {fields,events} = JSON.parse(newVal);
-                console.log(newVal)
                 this.handleSetEvents(events)
                 this.tableStructure = fields;
                 this.tableStructureKeys = Object.keys(fields);
@@ -160,14 +159,29 @@ class ComTable extends HTMLElement{
                 const cell0 = row0.insertCell(0);
                 cell0.append("add")
             }else{
-                const cell = row0.insertCell(index);
-                const input = document.createElement("input")
-                input.setAttribute("name",eleName);
-                input.setAttribute("form",formId);
-                for(let [attributeName,attributeValue] of Object.entries(properties)){
-                    input.setAttribute(attributeName,attributeValue)
-                }   
-                cell.append(input)
+                const cell = row0.insertCell(index)
+                switch(properties.type){
+                    case "file":
+                        const fileInput = this.generatePlainInput(eleName,properties,formId);
+                        fileInput.addEventListener("change",(e)=>{
+                            const imgPreview = window.URL.createObjectURL(e.target.files[0]);
+                            this.imgPreviewArr.push(imgPreview)
+                            editingImg.setAttribute("src",imgPreview)
+                        })
+                        const editingImg = this.generateImg("")
+                        cell.append(fileInput,editingImg);
+                        break;
+                    case "select":
+                        const select = this.generateSelectOption(eleName,properties,formId);
+                        const selectText = this.generatePlainText("")
+                        cell.append(select,selectText);
+                        break;
+                    default:
+                        const input = this.generatePlainInput(eleName,properties,formId);
+                        const text = this.generatePlainText("")
+                        cell.append(text,input);
+                        break;
+                }
                 index++;
             }
         }
@@ -180,51 +194,88 @@ class ComTable extends HTMLElement{
     handleSetQueryResult(){
         for(let i = 0; i < this.queryResult.length; i++){
             const row = this.$tbody.insertRow(i);
+            row.classList.add("table-row");
             let cellIndex = 0;
             for(let [eleName,properties] of Object.entries(this.tableStructure)){
-                const input = document.createElement("input")
-                input.setAttribute("name",eleName);
-                input.setAttribute("form","editFormId"+this.queryResult[i].id);
-                let type;
-                for(let [attributeName,attributeValue] of Object.entries(properties)){
-                    input.setAttribute(attributeName,attributeValue)
-                    if(attributeName==='type'){
-                        type = attributeValue;
-                    }
-                }  
-                input.setAttribute("value",this.queryResult[i][eleName])
-                input.classList.add("input");
-
+                const eleValue = this.queryResult[i][eleName];
                 const cell = row.insertCell(cellIndex)
-                if(type==='file'){
-                    const imgEditing = document.createElement("img");
-					imgEditing.classList.add("input","table-img")
-					imgEditing.setAttribute("src",this.queryResult[i][eleName])
-					input.addEventListener("change",(e)=>{
-						const imgPreview = window.URL.createObjectURL(e.target.files[0]);
-						this.imgPreviewArr.push(imgPreview)
-						imgEditing.setAttribute("src",imgPreview)
-					})
-					const img = document.createElement("img");
-					img.classList.add("table-img","text")
-                    img.setAttribute("src",this.queryResult[i][eleName])
-                    cell.append(img,input,imgEditing);
-                }else{
-                    const text = document.createElement("span");
-                    if(eleName!=='id'){
-                        text.classList.add("text")
-                    }
-                    text.append(this.queryResult[i][eleName])
-                    cell.append(text,input);
+                switch(properties.type){
+                    case "file":
+                        const fileInput = this.generatePlainInput(eleName,properties,"editFormId"+this.queryResult[i].id,eleValue);
+                        fileInput.classList.add("modificationArea");
+                        fileInput.addEventListener("change",(e)=>{
+                            const imgPreview = window.URL.createObjectURL(e.target.files[0]);
+                            this.imgPreviewArr.push(imgPreview)
+                            editingImg.setAttribute("src",imgPreview)
+                        })
+                        const editingImg = this.generateImg(eleValue)
+                        editingImg.classList.add("modificationArea")
+                        const exhibitionImg = this.generateImg(eleValue)
+                        exhibitionImg.classList.add("exhibitionArea")
+                        cell.append(fileInput,editingImg,exhibitionImg);
+                        break;
+                    case "select":
+                        const select = this.generateSelectOption(eleName,properties,"editFormId"+this.queryResult[i].id,eleValue);
+                        select.classList.add("modificationArea");
+                        const selectText = this.generatePlainText(eleValue)
+                        selectText.classList.add("exhibitionArea")
+                        cell.append(select,selectText);
+                        break;
+                    default:
+                        const input = this.generatePlainInput(eleName,properties,"editFormId"+this.queryResult[i].id,eleValue);
+                        input.classList.add("modificationArea");
+                        const text = this.generatePlainText(eleValue)
+                        if(eleName!=='id'){
+                            text.classList.add("exhibitionArea")
+                        }
+                        cell.append(text,input);
+                        break;
                 }
                 cellIndex++;
             }
-            row.classList.add("table-row");
             const cell = row.insertCell(cellIndex)
 			const editBtn =this.generateEditBtn(this.queryResult[i].id,row)
             const deleteBtn = this.generateDeleteBtn(this.queryResult[i]);
             cell.append(editBtn,deleteBtn)
         }
+    }
+    generateImg(eleValue){
+        const img = document.createElement("img");
+        img.setAttribute("src",eleValue)
+        img.classList.add("table-img")
+        return img
+    }
+    generateSelectOption(eleName,properties,formId,eleValue=undefined){
+        const select = document.createElement("select");
+        select.setAttribute("name",eleName);
+        select.setAttribute("form",formId);
+        for(let [content,value] of Object.entries(properties.options)){
+            const option = document.createElement("option")
+            option.setAttribute("value",value);
+            if(eleValue===value){
+                option.setAttribute("selected",true)
+            }
+            option.append(content);
+            select.append(option);
+        }
+        return select;
+    }
+    generatePlainInput(eleName,properties,formId,eleValue=""){
+        const input = document.createElement("input")
+        for(let [attributeName,attributeValue] of Object.entries(properties)){
+            input.setAttribute(attributeName,attributeValue)
+        }
+        if(eleValue){
+            input.setAttribute("value",eleValue);    
+        }
+        input.setAttribute("name",eleName);
+        input.setAttribute("form",formId);
+        return input;                                                                                                                                   
+    }
+    generatePlainText(eleValue){
+        const text = document.createElement("span");
+        text.append(eleValue)
+        return text;
     }
     generateEditBtn(rowId,row){
         const editForm = document.createElement("form")
