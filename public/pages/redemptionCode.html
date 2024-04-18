@@ -2,16 +2,16 @@
 <html>
 	<head>
 		<title>后台-redemptionCode</title>
-		<link rel="stylesheet" href="/public.css"/>
+		<link rel="stylesheet" href="/platform/public.css"/>
 	<head>
 	<body>
 		<com-layout>
 			<com-table id="table"></com-table>
 		</com-layout>
-		<script type="module" src="/components/comTable.js"></script>
-		<script type="module" src="/components/comLayout.js"></script>
+		<script type="module" src="/platform/components/comTable.js"></script>
+		<script type="module" src="/platform/components/comLayout.js"></script>
 		<script type="module">
-			import {asyncQuery,asyncAdd,asyncEdit,asyncDeleteOne} from "/api/redemptionCode.js"
+			import {asyncQuery,asyncAdd,asyncEdit,asyncDeleteOne} from "/platform/api/redemptionCode.js"
 			const table = document.querySelector("#table");
 			table.setAttribute("caption","RedemptionCode")
 			table.setAttribute("content",JSON.stringify({

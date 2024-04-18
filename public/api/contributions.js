@@ -1,6 +1,6 @@
 export async function asyncQuery(pageNum,pageSize){
     try {
-        const res = await fetch("/friendlyOctoCouscous/api/contributions?pageNum="+pageNum+"&pageSize="+pageSize,{
+        const res = await fetch("/platform/api/contributions?pageNum="+pageNum+"&pageSize="+pageSize,{
             method:"GET",
         });
         const res2 = await res.text();
@@ -18,7 +18,7 @@ export async function asyncQuery(pageNum,pageSize){
 }
 export async function asyncAdd(addForm){
     try {
-        await fetch("/friendlyOctoCouscous/api/contributions",{
+        await fetch("/platform/api/contributions",{
             method:"POST",
             body:new FormData(addForm)
         })
@@ -28,7 +28,7 @@ export async function asyncAdd(addForm){
 }
 export async function asyncDeleteOne(rowData){
     try {
-        await fetch("/friendlyOctoCouscous/api/contributions",{
+        await fetch("/platform/api/contributions",{
             method:'DELETE',
             headers:{ "Content-Type": "application/json"},
             body:JSON.stringify({id:rowData.id})
@@ -39,7 +39,7 @@ export async function asyncDeleteOne(rowData){
 }
 export async function asyncEdit(editForm){
     try {
-        await fetch("/friendlyOctoCouscous/api/contributions",{
+        await fetch("/platform/api/contributions",{
             method:'PUT',
             body:new FormData(editForm)
         })
