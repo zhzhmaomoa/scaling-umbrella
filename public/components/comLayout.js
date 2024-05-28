@@ -25,7 +25,7 @@ template.innerHTML = /*html*/`
             <section class="menu-item"><a href="/platform/index.html">memory</a></section>
             <section class="menu-item"><a href="/platform/pages/redemptionCode.html">redemptionCode</a></section>
             <section class="menu-item"><a href="/platform/pages/member.html">member</a></section>
-            <section class="menu-item">contribution</section>
+            <section class="menu-item"><a href="/platform/pages/contribution.html">contribution</a></section>
         </aside>
         <main class="main">
             <slot></slot>
