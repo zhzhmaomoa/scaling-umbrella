@@ -22,10 +22,10 @@ template.innerHTML = /*html*/`
     </style>
     <div class="x">
         <aside class="menu">
-            <section class="menu-item"><a href="/platform/index.html">memory</a></section>
-            <section class="menu-item"><a href="/platform/pages/redemptionCode.html">redemptionCode</a></section>
-            <section class="menu-item"><a href="/platform/pages/member.html">member</a></section>
-            <section class="menu-item"><a href="/platform/pages/contribution.html">contribution</a></section>
+            <section class="menu-item"><a href="../index.html">memory</a></section>
+            <section class="menu-item"><a href="../pages/redemptionCode.html">redemptionCode</a></section>
+            <section class="menu-item"><a href="../pages/member.html">member</a></section>
+            <section class="menu-item"><a href="../pages/contribution.html">contribution</a></section>
         </aside>
         <main class="main">
             <slot></slot>

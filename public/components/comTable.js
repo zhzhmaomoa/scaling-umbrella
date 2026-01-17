@@ -1,6 +1,6 @@
 const template = document.createElement("template")
 template.innerHTML = /*html*/`
-	<link rel="stylesheet" href="/platform/public.css"/>
+	<link rel="stylesheet" href="../public.css"/>
     <style>
         .table-x{
             padding:0 1rem;
@@ -78,8 +78,8 @@ template.innerHTML = /*html*/`
         </table>
     </div>
 `
-import "/platform/components/comLeaf.js"
-import {throttle} from "/platform/common.js"
+import "./comLeaf.js"
+import {throttle} from "../common.js"
 class ComTable extends HTMLElement{
     constructor(){
         super();
