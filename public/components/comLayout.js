@@ -22,8 +22,8 @@ template.innerHTML = /*html*/`
     </style>
     <div class="x">
         <aside class="menu">
-            <section class="menu-item"><a href="../index.html">memory</a></section>
-            <section class="menu-item"><a href="../pages/member.html">member</a></section>
+            <section class="menu-item"><a href="./index.html">memory</a></section>
+            <section class="menu-item"><a href="./pages/member.html">member</a></section>
         </aside>
         <main class="main">
             <slot></slot>
