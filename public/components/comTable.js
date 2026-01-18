@@ -1,6 +1,6 @@
 const template = document.createElement("template")
 template.innerHTML = /*html*/`
-	<link rel="stylesheet" href="../public.css"/>
+	<link rel="stylesheet" href="/platform/public.css"/>
     <style>
         .table-x{
             padding:0 1rem;
