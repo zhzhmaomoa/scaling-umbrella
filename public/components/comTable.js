@@ -96,7 +96,7 @@ class ComTable extends HTMLElement{
         this.tableStructure = {};
         this.tableStructureKeys = [];
         this.pageNum = 1;
-        this.pageSize = 10;
+        this.pageSize = 5;
         this.queryResult = [];
         this.imgPreviewArr = [];
         this.asyncQuery=async function(){};
