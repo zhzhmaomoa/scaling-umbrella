@@ -24,6 +24,7 @@ template.innerHTML = /*html*/`
         <aside class="menu">
             <section class="menu-item"><a href="/platform/index.html">memory</a></section>
             <section class="menu-item"><a href="/platform/pages/member.html">member</a></section>
+            <section class="menu-item"><a href="/platform/pages/foodRate.html">foodRate</a></section>
         </aside>
         <main class="main">
             <slot></slot>
